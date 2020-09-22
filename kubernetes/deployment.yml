@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+        app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: Welc0me2!
+            - name: POSTGRES_USER
+              value: postgresadmin
+            - name: POSTGRES_DB
+              value: crud-starter-api
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgredb
+      volumes:
+        - name: postgredb
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        - name: postgres-table-script
+          configMap:
+            name: postgres-table-script
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: crudapi-deployment
+spec:
+  replicas: 1
+  selector:
+     matchLabels:
+        app: crudapi
+  template:
+    metadata:
+       labels:
+         app: crudapi
+    spec:
+       containers:
+         - name: crudapi
+           image: vinothrlingam/crudapi:latest
+           imagePullPolicy: "Always"
+           ports:
+            - containerPort: 5000
+           envFrom:
+            - secretRef:
+                name: postgressecret
